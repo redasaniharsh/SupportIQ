@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
+import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import IncidentsList from "./pages/IncidentsList";
 import IncidentCreate from "./pages/IncidentCreate";
@@ -10,8 +11,12 @@ import SearchPage from "./pages/SearchPage";
 export default function App() {
   return (
     <Routes>
+      {/* Landing page — standalone, no Layout wrapper */}
+      <Route path="/" element={<LandingPage />} />
+
+      {/* App routes — wrapped in Layout with header/nav */}
       <Route element={<Layout />}>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/incidents" element={<IncidentsList />} />
         <Route path="/incidents/new" element={<IncidentCreate />} />
         <Route path="/incidents/:id" element={<IncidentDetail />} />
@@ -21,9 +26,6 @@ export default function App() {
           path="*"
           element={
             <div className="state-view state-empty">
-              <div className="state-icon" aria-hidden="true">
-                📭
-              </div>
               <p>Page not found.</p>
             </div>
           }

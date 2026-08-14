@@ -49,7 +49,7 @@ export default function SearchPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>🔎 Search</h1>
+        <h1>Search</h1>
       </div>
 
       <form className="filters-bar" onSubmit={onSubmit}>
@@ -71,11 +71,11 @@ export default function SearchPage() {
       {!q && <p className="text-muted">Enter a search term above.</p>}
 
       {q && (
-        <StateGate loading={loading} error={error} isEmpty={!!data && totalResults === 0} emptyMessage={`📭 No results for "${q}".`}>
+        <StateGate loading={loading} error={error} isEmpty={!!data && totalResults === 0} emptyMessage={`No results for "${q}".`}>
           {data && (
             <>
               <div className="search-section">
-                <h2 className="section-title">🔎 Incidents ({data.incidents.total})</h2>
+                <h2 className="section-title">Incidents ({data.incidents.total})</h2>
                 {data.incidents.items.length === 0 ? (
                   <p className="text-muted">No matching incidents.</p>
                 ) : (
@@ -94,7 +94,7 @@ export default function SearchPage() {
               </div>
 
               <div className="search-section">
-                <h2 className="section-title">📚 Knowledge Base ({data.knowledge_articles.total})</h2>
+                <h2 className="section-title">Knowledge Base ({data.knowledge_articles.total})</h2>
                 {data.knowledge_articles.items.length === 0 ? (
                   <p className="text-muted">No matching articles.</p>
                 ) : (
@@ -102,7 +102,7 @@ export default function SearchPage() {
                     {data.knowledge_articles.items.map((article) => (
                       <li key={article.article_id}>
                         <Link to={`/knowledge?article=${encodeURIComponent(article.article_id)}`} className="list-simple-title">
-                          📚 {article.title}
+                          {article.title}
                         </Link>
                         <span className="text-muted">{article.category}</span>
                       </li>

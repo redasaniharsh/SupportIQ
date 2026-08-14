@@ -69,7 +69,7 @@ export default function IncidentDetail() {
               </div>
               {incident.status !== "resolved" && incident.status !== "closed" && (
                 <button type="button" className="btn btn-primary" onClick={() => setShowResolveModal(true)}>
-                  ✅ Resolve Incident
+                  Resolve Incident
                 </button>
               )}
             </div>
@@ -77,7 +77,7 @@ export default function IncidentDetail() {
             <div className="detail-grid">
               <div>
                 <div className="card">
-                  <h3 className="section-title">📋 Details</h3>
+                  <h3 className="section-title">Details</h3>
                   <p>{incident.description}</p>
 
                   <div className="fact-grid">
@@ -105,7 +105,7 @@ export default function IncidentDetail() {
 
                   {incident.resolution?.description && (
                     <>
-                      <h3 className="section-title">✅ Resolution</h3>
+                      <h3 className="section-title">Resolution</h3>
                       <p>
                         <strong>Root cause:</strong> {incident.resolution.root_cause}
                       </p>
@@ -118,7 +118,7 @@ export default function IncidentDetail() {
                     </>
                   )}
 
-                  <h3 className="section-title">🕓 Timeline</h3>
+                  <h3 className="section-title">Timeline</h3>
                   <ul className="timeline">
                     <li>Created {formatDate(incident.created_at)}</li>
                     <li>Last updated {formatDate(incident.updated_at)}</li>
@@ -127,8 +127,8 @@ export default function IncidentDetail() {
                 </div>
 
                 <div className="card mt-4">
-                  <h3 className="section-title">💬 Comments ({comments.length})</h3>
-                  {comments.length === 0 && <p className="text-muted">📭 No comments yet.</p>}
+                  <h3 className="section-title">Comments ({comments.length})</h3>
+                  {comments.length === 0 && <p className="text-muted">No comments yet.</p>}
                   {comments.map((c) => (
                     <div className="comment-item" key={c.comment_id}>
                       <div className="comment-meta">
@@ -161,7 +161,7 @@ export default function IncidentDetail() {
                         required
                       />
                     </div>
-                    {commentError && <p className="field-error" role="alert">⚠️ {commentError}</p>}
+                    {commentError && <p className="field-error" role="alert">{commentError}</p>}
                     <button type="submit" className="btn btn-secondary" disabled={commentSubmitting || !commentBody.trim()}>
                       {commentSubmitting ? "Posting..." : "Post Comment"}
                     </button>

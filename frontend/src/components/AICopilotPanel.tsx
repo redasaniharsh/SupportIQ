@@ -14,13 +14,13 @@ export default function AICopilotPanel({ incidentId }: { incidentId: string }) {
 
   return (
     <div className="card copilot-panel">
-      <h2 className="section-title">🤖 AI Copilot</h2>
+      <h2 className="section-title">AI Copilot</h2>
 
       {!data && !loading && !error && (
         <>
           <p className="text-muted">Get an evidence-backed analysis of this incident: probable causes, recommended actions, and similar past tickets.</p>
           <button type="button" className="btn btn-primary btn-block" onClick={analyze}>
-            🤖 Analyze Incident
+            Analyze Incident
           </button>
         </>
       )}
@@ -34,7 +34,6 @@ export default function AICopilotPanel({ incidentId }: { incidentId: string }) {
 
       {error && !loading && (
         <div className="state-view state-error" role="alert">
-          <div className="state-icon" aria-hidden="true">🔌</div>
           <p>AI service unavailable, retry. ({error.message})</p>
           <button type="button" className="btn btn-secondary" onClick={analyze}>
             Retry Analysis
@@ -44,7 +43,6 @@ export default function AICopilotPanel({ incidentId }: { incidentId: string }) {
 
       {data && data.status === "ai_unavailable" && (
         <div className="state-view state-error" role="alert">
-          <div className="state-icon" aria-hidden="true">🔌</div>
           <p>AI service unavailable, retry. {data.message}</p>
           <button type="button" className="btn btn-secondary" onClick={analyze}>
             Retry Analysis
@@ -58,17 +56,17 @@ export default function AICopilotPanel({ incidentId }: { incidentId: string }) {
             Model: {data.model} · {data.retrieval_count} evidence sources · {data.latency_ms}ms
           </p>
 
-          <h3 className="section-title">📝 Summary</h3>
+          <h3 className="section-title">Summary</h3>
           <p>{data.analysis.summary}</p>
 
-          <h3 className="section-title">🗂️ Classification</h3>
+          <h3 className="section-title">Classification</h3>
           <p>
             Category: <strong>{data.analysis.category}</strong> · Suggested Priority:{" "}
             <strong>{data.analysis.priority}</strong>
-            {data.analysis.escalation_required && <span> · ⚠️ Escalation Recommended</span>}
+            {data.analysis.escalation_required && <span className="escalation-flag"> · Escalation Recommended</span>}
           </p>
 
-          <h3 className="section-title">📊 Confidence</h3>
+          <h3 className="section-title">Confidence</h3>
           <p>
             {data.confidence.bucket} confidence ({Math.round(data.confidence.evidence_score * 100)}% evidence score)
             {data.confidence.model_reported ? ` · model self-reported: ${data.confidence.model_reported}` : ""}
@@ -82,7 +80,7 @@ export default function AICopilotPanel({ incidentId }: { incidentId: string }) {
 
           {data.analysis.probable_causes.length > 0 && (
             <>
-              <h3 className="section-title">🧠 Probable Causes</h3>
+              <h3 className="section-title">Probable Causes</h3>
               {data.analysis.probable_causes.map((cause, idx) => (
                 <div className="cause-item" key={idx}>
                   <p style={{ marginTop: 0 }}>
@@ -96,7 +94,7 @@ export default function AICopilotPanel({ incidentId }: { incidentId: string }) {
 
           {data.analysis.recommended_actions.length > 0 && (
             <>
-              <h3 className="section-title">💡 Recommended Actions</h3>
+              <h3 className="section-title">Recommended Actions</h3>
               {[...data.analysis.recommended_actions]
                 .sort((a, b) => a.priority_order - b.priority_order)
                 .map((action, idx) => (
@@ -112,11 +110,11 @@ export default function AICopilotPanel({ incidentId }: { incidentId: string }) {
 
           {data.analysis.similar_incidents.length > 0 && (
             <>
-              <h3 className="section-title">🔎 Similar Incidents</h3>
+              <h3 className="section-title">Similar Incidents</h3>
               {data.analysis.similar_incidents.map((sim) => (
                 <div className="similar-incident-item" key={sim.incident_id}>
                   <Link to={`/incidents/${sim.incident_id}`}>{sim.incident_id}</Link>
-                  <span>{sim.relationship === "duplicate" ? "🔁 Likely duplicate" : "Related"}</span>
+                  <span>{sim.relationship === "duplicate" ? "Likely duplicate" : "Related"}</span>
                 </div>
               ))}
             </>
@@ -124,7 +122,7 @@ export default function AICopilotPanel({ incidentId }: { incidentId: string }) {
 
           {data.analysis.knowledge_articles.length > 0 && (
             <>
-              <h3 className="section-title">📚 Knowledge Articles</h3>
+              <h3 className="section-title">Knowledge Articles</h3>
               {data.analysis.knowledge_articles.map((kb) => (
                 <div className="similar-incident-item" key={kb.article_id}>
                   <Link to={`/knowledge?article=${encodeURIComponent(kb.article_id)}`}>{kb.article_id}</Link>
@@ -136,7 +134,7 @@ export default function AICopilotPanel({ incidentId }: { incidentId: string }) {
 
           {data.analysis.uncertainties.length > 0 && (
             <>
-              <h3 className="section-title">❓ Uncertainties</h3>
+              <h3 className="section-title">Uncertainties</h3>
               <ul className="uncertainty-list">
                 {data.analysis.uncertainties.map((u, idx) => (
                   <li key={idx}>{u}</li>
@@ -145,16 +143,16 @@ export default function AICopilotPanel({ incidentId }: { incidentId: string }) {
             </>
           )}
 
-          <h3 className="section-title">✅ Final Recommendation</h3>
+          <h3 className="section-title">Final Recommendation</h3>
           <p>{data.analysis.final_recommendation}</p>
 
           <button type="button" className="btn btn-secondary btn-block mt-4" onClick={analyze}>
-            🔄 Re-run Analysis
+            Re-run Analysis
           </button>
         </div>
       )}
 
-      <p className="copilot-disclaimer">⚠️ AI-generated assistance. Verify before applying.</p>
+      <p className="copilot-disclaimer">AI-generated assistance. Verify before applying.</p>
     </div>
   );
 }

@@ -9,12 +9,9 @@ export function LoadingState({ label = "Loading..." }: { label?: string }) {
   );
 }
 
-export function EmptyState({ message, icon = "📭" }: { message: string; icon?: string }) {
+export function EmptyState({ message }: { message: string }) {
   return (
     <div className="state-view state-empty">
-      <div className="state-icon" aria-hidden="true">
-        {icon}
-      </div>
       <p>{message}</p>
     </div>
   );
@@ -23,9 +20,6 @@ export function EmptyState({ message, icon = "📭" }: { message: string; icon?:
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <div className="state-view state-error" role="alert">
-      <div className="state-icon" aria-hidden="true">
-        ⚠️
-      </div>
       <p>{message}</p>
       {onRetry && (
         <button type="button" className="btn btn-secondary" onClick={onRetry}>

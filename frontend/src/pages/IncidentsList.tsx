@@ -34,7 +34,7 @@ export default function IncidentsList() {
     <div>
       <div className="page-header">
         <div>
-          <h1>🎫 Incidents</h1>
+          <h1>Incidents</h1>
           <p className="page-subtitle">{data ? `${data.total} total incidents` : "Browse and triage incidents"}</p>
         </div>
         <Link to="/incidents/new" className="btn btn-primary">
@@ -108,7 +108,7 @@ export default function IncidentsList() {
         error={error?.message ?? null}
         onRetry={refetch}
         isEmpty={items.length === 0}
-        emptyMessage="📭 No incidents match these filters."
+        emptyMessage="No incidents match these filters."
       >
         <div className="incident-table-wrap">
           <table className="incident-table">

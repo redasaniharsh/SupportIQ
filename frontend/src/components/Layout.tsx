@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState, type FormEvent } from "react";
-import { Search } from "lucide-react";
+import { Search, LayoutDashboard, FileText, BookOpen } from "lucide-react";
 
 export default function Layout() {
   const [query, setQuery] = useState("");
@@ -18,17 +18,18 @@ export default function Layout() {
       <header className="app-header">
         <div className="app-header-inner">
           <NavLink to="/" className="brand" end>
-            <span aria-hidden="true">🤖</span> AI Service Desk
+            <span className="brand-icon">S</span>
+            SupportIQ
           </NavLink>
           <nav className="main-nav" aria-label="Main navigation">
-            <NavLink to="/" end className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
-              Dashboard
+            <NavLink to="/dashboard" end className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
+              <LayoutDashboard size={15} /> Dashboard
             </NavLink>
             <NavLink to="/incidents" className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
-              🎫 Incidents
+              <FileText size={15} /> Incidents
             </NavLink>
             <NavLink to="/knowledge" className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
-              📚 Knowledge
+              <BookOpen size={15} /> Knowledge
             </NavLink>
           </nav>
           <form className="global-search" role="search" onSubmit={onSearchSubmit}>

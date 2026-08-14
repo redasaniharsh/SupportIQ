@@ -53,7 +53,7 @@ function ArticleDetail({ articleId, onClose }: { articleId: string; onClose: () 
 
               {article.symptoms.length > 0 && (
                 <>
-                  <h3 className="section-title">🩺 Symptoms</h3>
+                  <h3 className="section-title">Symptoms</h3>
                   <ul className="article-list">
                     {article.symptoms.map((s, i) => (
                       <li key={i}>{s}</li>
@@ -63,7 +63,7 @@ function ArticleDetail({ articleId, onClose }: { articleId: string; onClose: () 
               )}
               {article.root_causes.length > 0 && (
                 <>
-                  <h3 className="section-title">🧠 Root Causes</h3>
+                  <h3 className="section-title">Root Causes</h3>
                   <ul className="article-list">
                     {article.root_causes.map((s, i) => (
                       <li key={i}>{s}</li>
@@ -73,7 +73,7 @@ function ArticleDetail({ articleId, onClose }: { articleId: string; onClose: () 
               )}
               {article.troubleshooting_steps.length > 0 && (
                 <>
-                  <h3 className="section-title">🔧 Troubleshooting Steps</h3>
+                  <h3 className="section-title">Troubleshooting Steps</h3>
                   <ol className="article-list">
                     {article.troubleshooting_steps.map((s, i) => (
                       <li key={i}>{s}</li>
@@ -81,12 +81,12 @@ function ArticleDetail({ articleId, onClose }: { articleId: string; onClose: () 
                   </ol>
                 </>
               )}
-              <h3 className="section-title">✅ Resolution</h3>
+              <h3 className="section-title">Resolution</h3>
               <p>{article.resolution}</p>
 
               {article.escalation_conditions.length > 0 && (
                 <>
-                  <h3 className="section-title">🚨 Escalation Conditions</h3>
+                  <h3 className="section-title">Escalation Conditions</h3>
                   <ul className="article-list">
                     {article.escalation_conditions.map((s, i) => (
                       <li key={i}>{s}</li>
@@ -136,7 +136,7 @@ export default function Knowledge() {
     <div>
       <div className="page-header">
         <div>
-          <h1>📚 Knowledge Base</h1>
+          <h1>Knowledge Base</h1>
           <p className="page-subtitle">{data ? `${data.total} articles` : "Troubleshooting articles and playbooks"}</p>
         </div>
       </div>
@@ -162,7 +162,7 @@ export default function Knowledge() {
         error={error?.message ?? null}
         onRetry={refetch}
         isEmpty={items.length === 0}
-        emptyMessage="📭 No knowledge articles found."
+        emptyMessage="No knowledge articles found."
       >
         <div className="kb-grid">
           {items.map((article) => (
@@ -174,7 +174,7 @@ export default function Knowledge() {
               style={{ textAlign: "left", cursor: "pointer" }}
             >
               <div className="kb-meta">{article.category}</div>
-              <h3>📚 {article.title}</h3>
+              <h3>{article.title}</h3>
               <div className="kb-meta">Updated {formatDateShort(article.updated_at)}</div>
             </button>
           ))}

@@ -53,7 +53,7 @@ export default function IncidentCreate() {
       </div>
 
       <div className="card" style={{ maxWidth: 720 }}>
-        <p className="hint-note">🤖 AI will analyze this incident after creation.</p>
+        <p className="hint-note">AI will analyze this incident after creation.</p>
 
         <form onSubmit={onSubmit} noValidate>
           <div className="form-field">
@@ -119,7 +119,7 @@ export default function IncidentCreate() {
             </div>
           </div>
 
-          {error && <p className="field-error" role="alert">⚠️ {error}</p>}
+          {error && <p className="field-error" role="alert">{error}</p>}
 
           <div className="modal-actions" style={{ justifyContent: "flex-start" }}>
             <button type="submit" className="btn btn-primary" disabled={submitting}>
