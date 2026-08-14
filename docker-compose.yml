@@ -1,0 +1,29 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+# NOTE: MongoDB Atlas and Pinecone are managed cloud services, not containerized here —
+# point MONGODB_URI / PINECONE_API_KEY in .env at your own Atlas cluster and Pinecone project.
+# Containerization is an optional enhancement per the assessment brief; running the backend
+# and frontend directly with uvicorn/npm (see README) is equally valid and faster to iterate on.
