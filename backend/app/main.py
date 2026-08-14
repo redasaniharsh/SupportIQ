@@ -40,10 +40,18 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Build allowed origins from ALLOWED_ORIGINS (comma-separated) with
+    # FRONTEND_URL as a fallback so local dev still works out of the box.
+    raw = settings.allowed_origins.strip()
+    if raw:
+        origins = [o.strip().rstrip("/") for o in raw.split(",") if o.strip()]
+    else:
+        origins = [settings.frontend_url.rstrip("/")]
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
+        allow_origins=origins,
+        allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
