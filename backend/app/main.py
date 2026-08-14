@@ -1,5 +1,5 @@
 """FastAPI application entrypoint: lifespan for Mongo connect/close, CORS
-from FRONTEND_URL, router includes."""
+from ALLOWED_ORIGINS / FRONTEND_URL, router includes."""
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
@@ -42,8 +42,8 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[settings.frontend_url],
-        allow_credentials=True,
+        allow_origins=["*"],
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
     )

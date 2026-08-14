@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     # --- App / CORS ---
     frontend_url: str = Field(default="http://localhost:5173", alias="FRONTEND_URL")
     backend_url: str = Field(default="http://localhost:8000", alias="BACKEND_URL")
+    # Comma-separated list of allowed frontend origins, e.g.:
+    # "https://supportiq.onrender.com,https://www.myapp.com"
+    # If empty, falls back to FRONTEND_URL
+    allowed_origins: str = Field(default="", alias="ALLOWED_ORIGINS")
 
     # --- Similarity thresholds ---
     similarity_duplicate_threshold: float = Field(default=0.90, alias="SIMILARITY_DUPLICATE_THRESHOLD")
