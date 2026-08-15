@@ -1,215 +1,957 @@
-
 # 🤖 AI Service Desk
 
-An evidence-backed, RAG-powered support incident desk — built for the DigiPlus Technical Assessment.
+> **Evidence-backed, RAG-powered IT support incident management platform**
 
-Support engineers can create and manage incidents, get AI analysis grounded in a real knowledge base and historical tickets (not hard-coded rules), find similar past incidents, and record resolutions — all persisted in MongoDB with a Pinecone-backed semantic retrieval layer and Grok (xAI) as the reasoning LLM.
+An AI-powered Service Desk built for the **DigiPlus Technical Assessment** that helps support engineers create, manage, analyze, and resolve technical incidents using **Retrieval-Augmented Generation (RAG)**.
 
-> 📄 Full architecture, data model, RAG pipeline and design rationale: [`DESIGN.md`](./DESIGN.md).
+The system combines a curated knowledge base, historical support tickets, semantic retrieval through **Pinecone**, structured reasoning with **Grok (xAI)**, and **MongoDB** as the system of record.
 
----
+Unlike rule-based support systems, AI recommendations are grounded in retrieved evidence and validated server-side before being presented to users.
 
-## Features
-
-- 🎫 Create, list, filter, search, update and resolve incidents with a validated lifecycle (`OPEN → IN_PROGRESS → PENDING → RESOLVED → CLOSED`)
-- 🤖 **AI Copilot**: one click analyzes an incident using Retrieval-Augmented Generation over a curated knowledge base + historical support tickets
-- 📚 Knowledge base with realistic troubleshooting articles across 8 IT support categories
-- 🔎 Similar/duplicate incident detection with configurable similarity thresholds
-- 📌 Every AI recommendation is traceable to the specific KB article or historical ticket that supports it (evidence IDs, validated server-side — the model can never cite a source that wasn't actually retrieved)
-- 📊 Dashboard analytics (status/priority/category breakdowns, resolution activity) via MongoDB aggregation
-- ⚠️ Guardrails: the AI never invents IDs, never claims a resolution happened, never auto-changes priority/status, and treats retrieved content as untrusted data (not instructions) — a `AI_PROVIDER=mock` mode exists purely for tests/offline dev and is clearly labeled as such
-- ✅ Backend test suite (pytest) — passes with zero real Mongo/Pinecone/Grok credentials
-
-## Architecture
-
-```
-React + Vite + TS  ──REST──▶  FastAPI  ──async──▶ MongoDB Atlas (source of truth)
-                                  │
-                     ┌────────────┴────────────┐
-                     ▼                          ▼
-             Pinecone (semantic          Grok / xAI LLM
-             retrieval only)             (structured JSON analysis)
-```
-
-See [`DESIGN.md`](./DESIGN.md) for the full RAG pipeline (chunking → retrieval → fallback broadening → rerank → grounded prompt → guardrail-validated structured output → persisted analysis).
-
-## Tech Stack
-
-| Layer | Choice |
-|---|---|
-| Frontend | React 18, Vite, TypeScript, React Router, Axios, lucide-react |
-| Backend | FastAPI, Pydantic v2, Motor (async MongoDB driver) |
-| Database | MongoDB Atlas |
-| Vector store | Pinecone (serverless, integrated embeddings — `llama-text-embed-v2`) |
-| LLM | Grok (xAI), OpenAI-compatible API — model configurable via `LLM_MODEL` |
-| Tests | pytest, pytest-asyncio (Mongo/Pinecone/LLM all mocked) |
+> **Architecture & Design:** See [`DESIGN.md`](./DESIGN.md) for the complete architecture, data model, RAG pipeline, chunking strategy, retrieval flow, guardrails, and design decisions.
 
 ---
 
-## AI Configuration — Getting a Grok (xAI) API Key
+## ✨ Key Features
 
-**The key is never hard-coded anywhere in this repo.** It's read from an environment variable at startup.
+### 🎫 Incident Management
 
-1. Go to **https://console.x.ai** and sign in / create an account.
-2. Open **API Keys** → **Create API Key**. Copy it immediately (shown once).
-3. Optionally set a spending limit in the billing section.
-4. Check **https://docs.x.ai** for the current model catalog before your demo — model availability/names change over time; don't assume a specific one is permanent.
-5. Put the key in `backend/.env` (copied from `.env.example`, which is git-ignored for the real `.env`):
+* Create, view, update, search, filter, and delete incidents
+* Validated incident lifecycle:
+  `OPEN → IN_PROGRESS → PENDING → RESOLVED → CLOSED`
+* Priority, category, service, team, and assignee management
+* Incident comments and resolution tracking
+* Paginated incident listing with advanced filters
 
+### 🤖 AI Copilot
+
+Analyze an incident with a single action using a RAG-powered AI pipeline.
+
+The AI combines:
+
+* Current incident context
+* Historical support tickets
+* Knowledge-base articles
+* Semantic retrieval
+* Deterministic reranking
+* Structured LLM reasoning
+* Server-side evidence validation
+
+AI output is returned as structured data rather than unrestricted text.
+
+### 📚 Knowledge Base
+
+Includes realistic troubleshooting content across multiple IT support categories.
+
+Knowledge articles are:
+
+1. Stored in MongoDB
+2. Split into meaningful chunks
+3. Embedded using Pinecone's integrated embedding model
+4. Indexed for semantic retrieval
+5. Retrieved as supporting evidence during incident analysis
+
+### 🔎 Similar Incident Detection
+
+Find historically similar incidents using semantic similarity.
+
+The system supports configurable thresholds for:
+
+* Duplicate incidents
+* Related incidents
+
+```env
+SIMILARITY_DUPLICATE_THRESHOLD=0.90
+SIMILARITY_RELATED_THRESHOLD=0.75
 ```
-LLM_PROVIDER=grok
-LLM_API_KEY=xai-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-LLM_BASE_URL=https://api.x.ai/v1
-LLM_MODEL=grok-4-fast
+
+### 📌 Evidence-Backed AI
+
+Every AI recommendation must be supported by retrieved evidence.
+
+The backend validates every `evidence_id` returned by the model against the actual retrieved evidence set.
+
+This prevents the model from:
+
+* Inventing source IDs
+* Citing unavailable documents
+* Fabricating supporting evidence
+
+### 📊 Dashboard Analytics
+
+MongoDB aggregation pipelines provide:
+
+* Incident status breakdown
+* Priority distribution
+* Category distribution
+* Resolution activity
+* Operational statistics
+
+### 🛡️ AI Safety Guardrails
+
+The AI is explicitly prevented from:
+
+* Inventing incident or evidence IDs
+* Claiming that an incident was resolved when it was not
+* Automatically changing priority
+* Automatically changing incident status
+* Treating retrieved documents as executable instructions
+
+Retrieved documents are treated as **untrusted reference data**, providing protection against prompt injection from knowledge-base or historical-ticket content.
+
+### 🧪 Testable AI Architecture
+
+The backend can run without real MongoDB, Pinecone, or Grok credentials.
+
+```env
+AI_PROVIDER=mock
 ```
 
-For local development/tests without a key, set `AI_PROVIDER=mock` (see `.env.example`) — this returns a structurally valid but clearly mock-labeled response. **Never present mock output as real AI in a demo.**
+The mock provider returns structurally valid responses for local development and automated testing.
 
-Secrets hygiene: `.env` is git-ignored; only `.env.example` (blank placeholders) is committed; logs redact `LLM_API_KEY`, `MONGODB_URI`, `PINECONE_API_KEY`; CORS is restricted to `FRONTEND_URL`, not `*`.
+> Mock responses must never be presented as real AI output during a demonstration.
 
 ---
 
-## Environment Variables
+# 🏗️ Architecture
 
-Copy `.env.example` to `.env` at the repo root (and/or `backend/.env` — the backend loads `backend/.env`) and fill in:
-
+```text
+                    ┌─────────────────────────┐
+                    │     React + Vite + TS   │
+                    │                         │
+                    │  Incident Dashboard     │
+                    │  AI Copilot             │
+                    │  Knowledge Base         │
+                    │  Analytics              │
+                    └────────────┬────────────┘
+                                 │
+                               REST
+                                 │
+                                 ▼
+                    ┌─────────────────────────┐
+                    │       FastAPI           │
+                    │                         │
+                    │ Incident APIs           │
+                    │ RAG Pipeline            │
+                    │ AI Guardrails           │
+                    │ Analytics               │
+                    └───────┬─────────┬───────┘
+                            │         │
+                            │         │
+                            ▼         ▼
+                 ┌──────────────┐   ┌──────────────┐
+                 │ MongoDB      │   │  Pinecone    │
+                 │ Atlas        │   │              │
+                 │              │   │ Semantic     │
+                 │ Source of    │   │ Retrieval    │
+                 │ Truth        │   │              │
+                 └──────────────┘   └──────┬───────┘
+                                           │
+                                           ▼
+                                  ┌────────────────┐
+                                  │   Grok / xAI   │
+                                  │                │
+                                  │ Structured AI  │
+                                  │ Reasoning      │
+                                  └────────────────┘
 ```
+
+### Core Architecture Principle
+
+**MongoDB is the source of truth.**
+
+Pinecone is treated as a **disposable, rebuildable retrieval index** rather than the authoritative data store.
+
+This allows the vector index to be regenerated whenever required without compromising application state.
+
+---
+
+# 🔄 RAG Pipeline
+
+The AI analysis pipeline follows this flow:
+
+```text
+Incident
+   │
+   ▼
+Query Construction
+   │
+   ▼
+Semantic Retrieval
+   │
+   ▼
+Fallback Retrieval Broadening
+   │
+   ▼
+Deterministic Reranking
+   │
+   ▼
+Evidence Selection
+   │
+   ▼
+Grounded Prompt
+   │
+   ▼
+Grok / xAI
+   │
+   ▼
+Structured JSON
+   │
+   ▼
+Pydantic Validation
+   │
+   ▼
+Evidence ID Validation
+   │
+   ▼
+Backend Confidence Calculation
+   │
+   ▼
+Persisted AI Analysis
+```
+
+### Retrieval Sources
+
+The system retrieves evidence from:
+
+* Knowledge-base articles
+* Historical support tickets
+* Previously resolved incidents
+
+### Reranking
+
+Retrieved results are reranked using deterministic signals including:
+
+* Semantic similarity
+* Category match
+* Service match
+* Resolution presence
+* Lexical overlap
+
+The current implementation intentionally uses a deterministic scoring strategy rather than a learned cross-encoder.
+
+---
+
+# 🧠 AI Guardrail Architecture
+
+The model does **not** have unrestricted authority over application state.
+
+The AI produces structured recommendations, while the backend remains responsible for validation and state changes.
+
+```text
+                ┌───────────────────┐
+                │   Retrieved Data  │
+                │                   │
+                │ UNTRUSTED CONTENT │
+                └─────────┬─────────┘
+                          │
+                          ▼
+                  ┌───────────────┐
+                  │ Grounded      │
+                  │ Prompt        │
+                  └───────┬───────┘
+                          │
+                          ▼
+                  ┌───────────────┐
+                  │   Grok / xAI  │
+                  └───────┬───────┘
+                          │
+                    Structured JSON
+                          │
+                          ▼
+                  ┌───────────────┐
+                  │ Pydantic      │
+                  │ Validation    │
+                  └───────┬───────┘
+                          │
+                          ▼
+                  ┌───────────────┐
+                  │ Evidence ID   │
+                  │ Validation    │
+                  └───────┬───────┘
+                          │
+                          ▼
+                  ┌───────────────┐
+                  │ Backend       │
+                  │ Confidence    │
+                  └───────┬───────┘
+                          │
+                          ▼
+                     User Output
+```
+
+Confidence is calculated independently by the backend using retrieval quality, evidence count, and evidence agreement rather than relying solely on the model's self-reported confidence.
+
+---
+
+# 🛠️ Tech Stack
+
+| Layer            | Technology              |
+| ---------------- | ----------------------- |
+| Frontend         | React 18                |
+| Build Tool       | Vite                    |
+| Language         | TypeScript              |
+| Routing          | React Router            |
+| HTTP Client      | Axios                   |
+| UI Icons         | lucide-react            |
+| Backend          | FastAPI                 |
+| Validation       | Pydantic v2             |
+| Database Driver  | Motor                   |
+| Database         | MongoDB Atlas           |
+| Vector Database  | Pinecone                |
+| Embeddings       | `llama-text-embed-v2`   |
+| LLM              | Grok / xAI              |
+| Testing          | pytest + pytest-asyncio |
+| Containerization | Docker / Docker Compose |
+
+---
+
+# 📁 Project Structure
+
+```text
+ai-service-desk/
+│
+├── backend/
+│   ├── app/
+│   │   ├── ai/
+│   │   │   ├── prompts.py
+│   │   │   ├── schemas.py
+│   │   │   └── guardrails.py
+│   │   │
+│   │   └── ...
+│   │
+│   ├── scripts/
+│   │   ├── download_dataset.py
+│   │   ├── inspect_dataset.py
+│   │   ├── import_dataset.py
+│   │   ├── build_knowledge_base.py
+│   │   ├── chunk_documents.py
+│   │   ├── index_pinecone.py
+│   │   ├── verify_ingestion.py
+│   │   └── reset_database.py
+│   │
+│   └── requirements.txt
+│
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── .env.example
+│
+├── data/
+│   ├── raw/
+│   └── processed/
+│
+├── DESIGN.md
+├── .env.example
+└── docker-compose.yml
+```
+
+---
+
+# 🔐 Environment Configuration
+
+Create your environment file from the provided example:
+
+```bash
+cp .env.example backend/.env
+```
+
+Configure the required services:
+
+```env
 MONGODB_URI=
 MONGODB_DATABASE=ai_service_desk
+
 PINECONE_API_KEY=
 PINECONE_INDEX_NAME=ai-service-desk
 PINECONE_CLOUD=aws
 PINECONE_REGION=us-east-1
+
 LLM_PROVIDER=grok
 LLM_API_KEY=
 LLM_BASE_URL=https://api.x.ai/v1
 LLM_MODEL=grok-4-fast
+
 FRONTEND_URL=http://localhost:5173
 BACKEND_URL=http://localhost:8000
+
 SIMILARITY_DUPLICATE_THRESHOLD=0.90
 SIMILARITY_RELATED_THRESHOLD=0.75
+
 AI_PROVIDER=grok
 ```
 
-- **MongoDB Atlas**: create a free cluster at https://www.mongodb.com/cloud/atlas, add your IP to the network access list, create a DB user, and use the connection string as `MONGODB_URI`.
-- **Pinecone**: create a free project/API key at https://app.pinecone.io — the index itself (`ai-service-desk`) is created automatically by `scripts/index_pinecone.py` if it doesn't exist.
+> **Never commit `.env` or API credentials to version control.**
+
+The repository only contains blank environment templates.
 
 ---
 
-## Installation & Setup
+# 🤖 Grok / xAI Setup
+
+The application uses the OpenAI-compatible xAI API.
+
+### 1. Create an xAI account
+
+Visit the xAI developer console:
+
+https://console.x.ai
+
+### 2. Create an API key
+
+Open:
+
+**API Keys → Create API Key**
+
+Copy the key when it is displayed.
+
+### 3. Configure the backend
+
+Add the credentials to:
+
+```text
+backend/.env
+```
+
+Example:
+
+```env
+LLM_PROVIDER=grok
+LLM_API_KEY=xai-xxxxxxxxxxxxxxxx
+LLM_BASE_URL=https://api.x.ai/v1
+LLM_MODEL=grok-4-fast
+```
+
+Model names can change over time, so verify the currently available model catalog before deployment or demonstration.
+
+---
+
+# 🗄️ Database Setup
+
+## MongoDB Atlas
+
+Create a MongoDB Atlas cluster and configure:
+
+1. Database user
+2. Network access / IP allowlist
+3. Connection string
+4. `MONGODB_URI`
+
+Example:
+
+```env
+MONGODB_URI=mongodb+srv://...
+MONGODB_DATABASE=ai_service_desk
+```
+
+MongoDB acts as the application's **primary source of truth**.
+
+---
+
+# 🌲 Pinecone Setup
+
+Create a Pinecone project and API key.
+
+```env
+PINECONE_API_KEY=
+PINECONE_INDEX_NAME=ai-service-desk
+PINECONE_CLOUD=aws
+PINECONE_REGION=us-east-1
+```
+
+The ingestion script automatically creates the required index when it does not already exist.
+
+Pinecone is used specifically for **semantic retrieval** and can be rebuilt from the MongoDB-backed source data.
+
+---
+
+# 🚀 Installation
+
+Clone the repository:
 
 ```bash
 git clone <repo-url>
 cd ai-service-desk
-
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r backend/requirements.txt
-
-cp .env.example backend/.env     # then edit backend/.env with your real credentials
 ```
 
-## Dataset Ingestion Pipeline
-
-Run in order from the repo root (each step is idempotent / safe to re-run):
+Create a Python virtual environment:
 
 ```bash
-python backend/scripts/download_dataset.py     # pulls mindweave/help-desk-tickets CSVs into data/raw/
-python backend/scripts/inspect_dataset.py      # prints schema, nulls, duplicates, distributions — sanity-check before importing
-python backend/scripts/import_dataset.py       # normalizes tickets → incidents/comments/agents/categories in MongoDB
-python backend/scripts/build_knowledge_base.py # seeds 10+ realistic knowledge articles into MongoDB
-python backend/scripts/chunk_documents.py      # section-aware chunking of KB articles + historical tickets → data/processed/
-python backend/scripts/index_pinecone.py       # creates/upserts vectors into Pinecone (idempotent, deterministic IDs)
-python backend/scripts/verify_ingestion.py     # prints a ✅/❌ health report across Mongo + Pinecone + a live semantic query
+python -m venv .venv
 ```
 
-To start over: `python backend/scripts/reset_database.py`.
+Activate it:
 
-## Running the Backend
+### macOS / Linux
+
+```bash
+source .venv/bin/activate
+```
+
+### Windows
+
+```bash
+.venv\Scripts\activate
+```
+
+Install backend dependencies:
+
+```bash
+pip install -r backend/requirements.txt
+```
+
+Create the environment file:
+
+```bash
+cp .env.example backend/.env
+```
+
+Then configure MongoDB, Pinecone, and Grok credentials.
+
+---
+
+# 📥 Dataset & Knowledge Base Ingestion
+
+Run the ingestion pipeline from the repository root.
+
+```bash
+python backend/scripts/download_dataset.py
+```
+
+Inspect the dataset:
+
+```bash
+python backend/scripts/inspect_dataset.py
+```
+
+Import historical tickets:
+
+```bash
+python backend/scripts/import_dataset.py
+```
+
+Build the knowledge base:
+
+```bash
+python backend/scripts/build_knowledge_base.py
+```
+
+Chunk documents:
+
+```bash
+python backend/scripts/chunk_documents.py
+```
+
+Index the chunks into Pinecone:
+
+```bash
+python backend/scripts/index_pinecone.py
+```
+
+Verify the complete ingestion pipeline:
+
+```bash
+python backend/scripts/verify_ingestion.py
+```
+
+### Complete Pipeline
+
+```text
+Raw Dataset
+     │
+     ▼
+Dataset Inspection
+     │
+     ▼
+Normalization
+     │
+     ▼
+MongoDB
+     │
+     ├───────────────┐
+     ▼               ▼
+Knowledge Base    Historical Tickets
+     │               │
+     └───────┬───────┘
+             ▼
+        Chunking
+             │
+             ▼
+          Pinecone
+             │
+             ▼
+       Semantic Search
+```
+
+All ingestion operations are designed to be safely re-run.
+
+To reset the database:
+
+```bash
+python backend/scripts/reset_database.py
+```
+
+---
+
+# ⚡ Running the Application
+
+## Backend
 
 ```bash
 cd backend
 uvicorn app.main:app --reload
 ```
-API docs: http://localhost:8000/docs · Health check: http://localhost:8000/api/health
 
-## Running the Frontend
+Backend:
+
+```text
+http://localhost:8000
+```
+
+Swagger API documentation:
+
+```text
+http://localhost:8000/docs
+```
+
+ReDoc:
+
+```text
+http://localhost:8000/redoc
+```
+
+Health check:
+
+```text
+http://localhost:8000/api/health
+```
+
+---
+
+## Frontend
+
+Open another terminal:
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env   # VITE_API_URL=http://localhost:8000
+```
+
+Create the frontend environment file:
+
+```bash
+cp .env.example .env
+```
+
+Configure:
+
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+Start the development server:
+
+```bash
 npm run dev
 ```
-App: http://localhost:5173
 
-## Running Tests
+Application:
+
+```text
+http://localhost:5173
+```
+
+---
+
+# 🧪 Running Tests
+
+The backend test suite can run without real AI or vector database credentials.
 
 ```bash
 cd backend
 AI_PROVIDER=mock pytest -q
 ```
-All tests mock Pinecone and the LLM client — no real credentials or network access required.
 
-## Containerization (optional)
+The tests mock:
 
-```bash
-cp .env.example .env   # fill in real credentials
-docker compose up --build
-```
-MongoDB Atlas and Pinecone remain external managed services (not containerized) — only the backend and frontend are containerized.
+* MongoDB
+* Pinecone
+* LLM provider
+
+This makes the test suite deterministic and suitable for CI/local development.
 
 ---
 
-## API Documentation
+# 🐳 Docker
 
-Interactive OpenAPI docs are auto-generated by FastAPI at `/docs` and `/redoc` once the backend is running. Key endpoints:
+Containerization is available through Docker Compose.
 
+```bash
+cp .env.example .env
 ```
-GET    /api/health
-GET    /api/incidents                 (paginated + filterable: status, priority, category, service, team, assignee, date range, q)
+
+Fill in the required credentials and run:
+
+```bash
+docker compose up --build
+```
+
+The application containers include:
+
+* Frontend
+* Backend
+
+The following remain externally managed:
+
+* MongoDB Atlas
+* Pinecone
+
+---
+
+# 🔌 API Overview
+
+FastAPI automatically exposes interactive documentation through `/docs`.
+
+### Health
+
+```http
+GET /api/health
+```
+
+### Incidents
+
+```http
+GET    /api/incidents
 POST   /api/incidents
 GET    /api/incidents/{id}
 PATCH  /api/incidents/{id}
 DELETE /api/incidents/{id}
-GET    /api/incidents/{id}/comments
-POST   /api/incidents/{id}/comments
-POST   /api/incidents/{id}/analyze     (RAG-driven AI analysis)
-POST   /api/incidents/{id}/resolve
-GET    /api/incidents/{id}/similar
-GET    /api/knowledge
-GET    /api/knowledge/{id}
-POST   /api/knowledge
-GET    /api/search
-GET    /api/dashboard/stats
 ```
 
-## AI Prompt Design & Guardrails
+### Comments
 
-Summarized here; full detail in `DESIGN.md` §6 and `backend/app/ai/prompts.py` / `guardrails.py`:
+```http
+GET  /api/incidents/{id}/comments
+POST /api/incidents/{id}/comments
+```
 
-- Retrieved KB/ticket content is explicitly framed as **untrusted reference data, not instructions** (prompt-injection defense).
-- The model must return structured JSON validated against a Pydantic schema (`backend/app/ai/schemas.py`).
-- Every `evidence_id` the model cites is checked against the actual retrieved evidence set server-side — unknown/invented IDs are stripped, never trusted.
-- Confidence shown to the user is computed independently by the backend (`evidence_score` from retrieval quality/count/agreement), not the model's self-report alone.
-- The AI never claims a resolution occurred, never auto-changes priority/status, and always carries a "verify before applying" disclaimer in the UI.
+### AI
 
-## Known Limitations
+```http
+POST /api/incidents/{id}/analyze
+```
 
-- No authentication/authorization layer (explicitly out of scope for the time budget; single-tenant, trusted-user assumption).
-- Reranking uses a deterministic scoring formula (semantic score + category/service match + resolution presence + lexical overlap), not a learned cross-encoder.
-- `/api/search` combines MongoDB text search with the same structured filters used elsewhere; deep semantic search is concentrated in `/analyze` and `/similar` where it adds the most value.
-- Incident/article ID sequencing queries the current max ID rather than using an atomic counters collection — fine at this scale, would move to atomic counters in production.
-- Dataset column-name mapping in `import_dataset.py` uses alias-matching against the Hugging Face CSV headers; re-run `inspect_dataset.py` after any dataset schema change to confirm the mapping still holds.
+### Resolution
 
-## Design Decisions
+```http
+POST /api/incidents/{id}/resolve
+```
 
-See `DESIGN.md` for the full rationale, including why Grok/xAI's OpenAI-compatible API was chosen (keeps the LLM client swappable behind one interface), why Pinecone integrated embeddings were used (guarantees ingestion and query never drift onto different embedding models), and why MongoDB is the sole source of truth while Pinecone is treated as a disposable, rebuildable retrieval index.
+### Similar Incidents
 
-## Future Improvements
+```http
+GET /api/incidents/{id}/similar
+```
 
-- Authentication/RBAC for multi-agent teams
-- Real-time notifications (WebSocket) when an incident is reassigned or an SLA is at risk
-- A learned reranker / cross-encoder for evidence ranking
-- Conversational follow-up chat on top of a completed analysis (multi-turn Copilot)
-- Atomic ID counters and optimistic concurrency control on incident updates
+### Knowledge Base
+
+```http
+GET  /api/knowledge
+GET  /api/knowledge/{id}
+POST /api/knowledge
+```
+
+### Search
+
+```http
+GET /api/search
+```
+
+### Dashboard
+
+```http
+GET /api/dashboard/stats
+```
+
+---
+
+# 🔒 Security & Reliability Considerations
+
+The application implements several safeguards around AI-generated output.
+
+### Evidence Validation
+
+Model-generated evidence IDs are validated against the actual retrieval results.
+
+### Prompt Injection Defense
+
+Retrieved content is explicitly treated as:
+
+> **Reference data, not instructions.**
+
+### Structured Output
+
+LLM responses are validated against Pydantic schemas before being consumed by the application.
+
+### Backend-Controlled Confidence
+
+AI confidence is not blindly accepted from the model.
+
+The backend calculates an evidence-based score using retrieval quality and evidence agreement.
+
+### No Autonomous State Changes
+
+AI recommendations do not automatically:
+
+* Resolve incidents
+* Change priorities
+* Change statuses
+* Claim completed actions
+
+Final application state remains under backend/user control.
+
+### Secret Management
+
+Sensitive credentials are:
+
+* Environment-based
+* Excluded from Git
+* Redacted from application logs
+
+---
+
+# ⚠️ Known Limitations
+
+The current implementation intentionally has several limitations.
+
+### Authentication
+
+Authentication and authorization are not implemented.
+
+The application assumes a trusted, single-tenant environment.
+
+### Reranking
+
+The reranker uses deterministic scoring rather than a learned cross-encoder.
+
+### Search
+
+`/api/search` primarily combines MongoDB search with structured filters.
+
+Deep semantic retrieval is concentrated in:
+
+```text
+/analyze
+/similar
+```
+
+### ID Generation
+
+Incident/article IDs currently use the current maximum ID rather than an atomic counter.
+
+This is acceptable at the current scale but should be replaced with atomic counters for production workloads.
+
+### Dataset Schema Mapping
+
+The dataset importer uses alias-based column matching against source CSV headers.
+
+If the source dataset schema changes, run:
+
+```bash
+python backend/scripts/inspect_dataset.py
+```
+
+before importing again.
+
+---
+
+# 🧩 Design Decisions
+
+The architecture intentionally separates responsibilities:
+
+| Component | Responsibility               |
+| --------- | ---------------------------- |
+| MongoDB   | Source of truth              |
+| Pinecone  | Semantic retrieval           |
+| Grok      | AI reasoning                 |
+| FastAPI   | Business logic & validation  |
+| React     | User interface               |
+| Pydantic  | Structured output validation |
+
+### Why Pinecone?
+
+Pinecone provides scalable semantic retrieval and integrated embeddings while keeping the retrieval layer independent from the application's primary database.
+
+### Why MongoDB?
+
+MongoDB provides flexible document storage for incidents, comments, knowledge articles, agents, categories, and AI analyses.
+
+### Why Grok / xAI?
+
+The xAI API exposes an OpenAI-compatible interface, allowing the LLM provider to remain replaceable behind a common application interface.
+
+### Why Rebuildable Vector Indexes?
+
+Pinecone is intentionally treated as a derived data layer.
+
+If the vector index is lost or rebuilt, the application can regenerate it from authoritative MongoDB data.
+
+---
+
+# 🚧 Future Improvements
+
+Potential production enhancements include:
+
+* 🔐 Authentication and role-based access control
+* 👥 Multi-agent team support
+* 🔔 Real-time incident notifications
+* ⏱️ SLA monitoring and escalation
+* 🧠 Learned cross-encoder reranking
+* 💬 Multi-turn AI Copilot conversations
+* 🔄 Optimistic concurrency control
+* ⚡ Atomic ID counters
+* 📈 Advanced operational analytics
+* 🔍 Hybrid semantic + keyword retrieval improvements
+
+---
+
+# 📄 Documentation
+
+| Document                   | Description                                                 |
+| -------------------------- | ----------------------------------------------------------- |
+| [`README.md`](./README.md) | Project overview and setup                                  |
+| [`DESIGN.md`](./DESIGN.md) | Architecture, RAG pipeline, data model and design decisions |
+
+---
+
+# 👨‍💻 Project Summary
+
+**AI Service Desk** demonstrates how an enterprise support workflow can combine traditional incident management with evidence-grounded generative AI.
+
+The key design principle is:
+
+> **The LLM recommends. The retrieval system provides evidence. The backend validates. The user decides.**
+
+This architecture keeps AI useful while maintaining traceability, deterministic validation, and control over application state.
+
+---
+
+## ⭐ Technical Highlights
+
+* Retrieval-Augmented Generation
+* Semantic similarity search
+* Knowledge-base retrieval
+* Historical incident retrieval
+* Deterministic reranking
+* Structured LLM output
+* Server-side evidence validation
+* Prompt-injection-aware retrieval
+* MongoDB aggregation analytics
+* FastAPI REST APIs
+* React + TypeScript frontend
+* Pinecone vector search
+* Grok / xAI integration
+* Mock AI provider for testing
+* Dockerized deployment
+* Automated backend tests
